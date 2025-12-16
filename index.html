@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sorteo FRIMSA S.A.</title>
+
+<style>
+body {
+    font-family: 'Arial Black', Arial, sans-serif;
+    background: radial-gradient(circle, #111, #000);
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 48px;
+    margin-bottom: 5px;
+    color: #ffd700;
+    text-shadow: 0 0 15px #ffcc00;
+}
+
+h2 {
+    margin-top: 0;
+    font-weight: normal;
+    letter-spacing: 2px;
+}
+
+textarea {
+    width: 90%;
+    max-width: 700px;
+    height: 180px;
+    font-size: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+input {
+    font-size: 18px;
+    padding: 8px;
+    width: 80px;
+    text-align: center;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    font-size: 20px;
+    padding: 15px 30px;
+    margin: 10px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#btnSortear {
+    background: #28a745;
+    color: white;
+}
+
+#btnResorteo {
+    background: #dc3545;
+    color: white;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+#panelGanador {
+    margin-top: 30px;
+    font-size: 32px;
+    min-height: 60px;
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px #fff; }
+    to { text-shadow: 0 0 20px #ffd700; }
+}
+
+.listaGanadores {
+    margin-top: 20px;
+    font-size: 20px;
+}
+
+.puesto {
+    margin: 5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>FRIMSA S.A.</h1>
+<h2>🎉 Sorteo en Vivo 🎉</h2>
+
+<p>Ingresá hasta <b>80 nombres</b> (uno por línea)</p>
+<textarea id="nombres"></textarea>
+
+<p>Cantidad de ganadores (máx. 20)</p>
+<input type="number" id="cantidad" min="1" max="20" value="20">
+
+<br>
+
+<button id="btnSortear" onclick="iniciarSorteo()">🎲 INICIAR SORTEO</button>
+<button id="btnResorteo" onclick="resetear()">🔁 RE-SORTEO</button>
+
+<div id="panelGanador"></div>
+<div class="listaGanadores" id="listaGanadores"></div>
+
+<script>
+let participantes = [];
+let ganadores = [];
+let indice = 0;
+
+function iniciarSorteo() {
+    let texto = document.getElementById("nombres").value.trim();
+    let cantidad = parseInt(document.getElementById("cantidad").value);
+
+    if (!texto) {
+        alert("Ingresá los nombres.");
+        return;
+    }
+
+    participantes = texto.split("\n").map(n => n.trim()).filter(n => n);
+    
+    if (participantes.length > 80) {
+        alert("Máximo 80 nombres.");
+        return;
+    }
+
+    if (cantidad > participantes.length) {
+        alert("No hay suficientes participantes.");
+        return;
+    }
+
+    // Mezcla aleatoria
+    participantes.sort(() => Math.random() - 0.5);
+
+    ganadores = participantes.slice(0, cantidad);
+    indice = 0;
+
+    document.getElementById("listaGanadores").innerHTML = "";
+    mostrarSiguiente();
+}
+
+function mostrarSiguiente() {
+    if (indice >= ganadores.length) {
+        document.getElementById("panelGanador").innerHTML = "🎉 SORTEO FINALIZADO 🎉";
+        return;
+    }
+
+    document.getElementById("panelGanador").innerHTML = "🎰 Sorteando...";
+    
+    setTimeout(() => {
+        let nombre = ganadores[indice];
+        document.getElementById("panelGanador").innerHTML =
+            `🏆 Puesto ${indice + 1}: <br><b>${nombre}</b>`;
+
+        let div = document.createElement("div");
+        div.className = "puesto";
+        div.innerHTML = `Puesto ${indice + 1}: ${nombre}`;
+        document.getElementById("listaGanadores").appendChild(div);
+
+        indice++;
+        setTimeout(mostrarSiguiente, 2500);
+    }, 1500);
+}
+
+function resetear() {
+    document.getElementById("panelGanador").innerHTML = "";
+    document.getElementById("listaGanadores").innerHTML = "";
+    indice = 0;
+}
+</script>
+
+</body>
+</html>
