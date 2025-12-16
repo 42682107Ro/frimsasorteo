@@ -2,178 +2,240 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sorteo FRIMSA S.A.</title>
 
 <style>
+:root {
+    --verde: #4f6f3a;
+    --verde-claro: #7fa866;
+    --dorado: #e6c75a;
+}
+
 body {
-    font-family: 'Arial Black', Arial, sans-serif;
-    background: radial-gradient(circle, #111, #000);
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle, #0b1208, #000);
     color: white;
     text-align: center;
-    padding: 20px;
+    overflow-x: hidden;
+}
+
+header img {
+    max-width: 220px;
+    margin-top: 20px;
+    animation: fadeDown 1.5s ease-out;
 }
 
 h1 {
-    font-size: 48px;
-    margin-bottom: 5px;
-    color: #ffd700;
-    text-shadow: 0 0 15px #ffcc00;
+    font-size: 42px;
+    color: var(--verde-claro);
+    letter-spacing: 3px;
 }
 
 h2 {
-    margin-top: 0;
-    font-weight: normal;
-    letter-spacing: 2px;
+    font-weight: 300;
+    color: #ccc;
 }
+
+main { padding: 20px; }
 
 textarea {
     width: 90%;
-    max-width: 700px;
-    height: 180px;
-    font-size: 15px;
-    padding: 10px;
-    border-radius: 8px;
+    max-width: 800px;
+    height: 170px;
+    border-radius: 10px;
     border: none;
+    padding: 12px;
 }
 
 input {
-    font-size: 18px;
-    padding: 8px;
     width: 80px;
+    font-size: 18px;
     text-align: center;
     border-radius: 8px;
     border: none;
 }
 
 button {
-    font-size: 20px;
-    padding: 15px 30px;
     margin: 10px;
+    padding: 15px 35px;
+    font-size: 18px;
     border-radius: 50px;
     border: none;
     cursor: pointer;
     font-weight: bold;
 }
 
-#btnSortear {
-    background: #28a745;
-    color: white;
-}
-
-#btnResorteo {
-    background: #dc3545;
-    color: white;
-}
-
-button:hover {
-    transform: scale(1.05);
-}
+#btnIniciar { background: var(--verde); color: white; }
+#btnSiguiente { background: var(--dorado); color: black; display: none; }
+#btnPresentador { background: #333; color: white; }
 
 #panelGanador {
-    margin-top: 30px;
-    font-size: 32px;
-    min-height: 60px;
-    animation: glow 1s infinite alternate;
+    margin-top: 40px;
+    font-size: 42px;
+    min-height: 120px;
+    color: var(--dorado);
+    text-shadow: 0 0 25px rgba(230,199,90,0.9);
 }
 
-@keyframes glow {
-    from { text-shadow: 0 0 5px #fff; }
-    to { text-shadow: 0 0 20px #ffd700; }
+#cuenta {
+    font-size: 80px;
+    color: var(--verde-claro);
+    animation: pulse 1s infinite;
 }
 
 .listaGanadores {
     margin-top: 20px;
-    font-size: 20px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 10px;
+    padding: 15px;
+    max-width: 750px;
+    margin-inline: auto;
 }
 
 .puesto {
-    margin: 5px 0;
+    padding: 6px;
+    border-bottom: 1px solid #333;
+}
+
+.confetti {
+    position: fixed;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.3); }
+}
+
+@keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-40px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>
 </head>
 
 <body>
 
-<h1>FRIMSA S.A.</h1>
-<h2>🎉 Sorteo en Vivo 🎉</h2>
+<header>
+    <img src="logo-frimsa.png">
+    <h1>FRIMSA S.A.</h1>
+    <h2>🎉 Sorteo en Vivo 🎉</h2>
+</header>
 
-<p>Ingresá hasta <b>80 nombres</b> (uno por línea)</p>
-<textarea id="nombres"></textarea>
+<main>
+    <textarea id="nombres" placeholder="Pegá hasta 90 nombres"></textarea><br><br>
 
-<p>Cantidad de ganadores (máx. 20)</p>
-<input type="number" id="cantidad" min="1" max="20" value="20">
+    Ganadores:
+    <input type="number" id="cantidad" min="1" max="20" value="20">
 
-<br>
+    <div>
+        <button id="btnIniciar" onclick="iniciar()">🎬 INICIAR SHOW</button>
+        <button id="btnSiguiente" onclick="siguiente()">➡ SIGUIENTE</button>
+        <button id="btnPresentador" onclick="modoPresentador()">🎤 MODO PRESENTADOR</button>
+    </div>
 
-<button id="btnSortear" onclick="iniciarSorteo()">🎲 INICIAR SORTEO</button>
-<button id="btnResorteo" onclick="resetear()">🔁 RE-SORTEO</button>
+    <div id="panelGanador"></div>
+    <div class="listaGanadores" id="lista"></div>
+</main>
 
-<div id="panelGanador"></div>
-<div class="listaGanadores" id="listaGanadores"></div>
+<audio id="redoble" src="redoble.mp3"></audio>
+<audio id="aplausos" src="aplausos.mp3"></audio>
 
 <script>
-let participantes = [];
-let ganadores = [];
-let indice = 0;
+let ganadores = [], indice = 0;
 
-function iniciarSorteo() {
-    let texto = document.getElementById("nombres").value.trim();
-    let cantidad = parseInt(document.getElementById("cantidad").value);
+function iniciar() {
+    document.documentElement.requestFullscreen?.();
 
-    if (!texto) {
-        alert("Ingresá los nombres.");
-        return;
-    }
+    let nombres = document.getElementById("nombres").value.trim().split("\n").filter(n=>n);
+    let cantidad = document.getElementById("cantidad").value;
 
-    participantes = texto.split("\n").map(n => n.trim()).filter(n => n);
-    
-    if (participantes.length > 80) {
-        alert("Máximo 80 nombres.");
-        return;
-    }
+    if (nombres.length > 90) return alert("Máx 90 nombres");
+    if (cantidad > nombres.length) return alert("No alcanza");
 
-    if (cantidad > participantes.length) {
-        alert("No hay suficientes participantes.");
-        return;
-    }
+    nombres.sort(()=>Math.random()-0.5);
+    ganadores = nombres.slice(0, cantidad);
 
-    // Mezcla aleatoria
-    participantes.sort(() => Math.random() - 0.5);
+    document.getElementById("nombres").disabled = true;
+    document.getElementById("cantidad").disabled = true;
+    document.getElementById("btnSiguiente").style.display = "inline-block";
 
-    ganadores = participantes.slice(0, cantidad);
-    indice = 0;
-
-    document.getElementById("listaGanadores").innerHTML = "";
-    mostrarSiguiente();
+    document.getElementById("panelGanador").innerHTML = "🎰 LISTOS...";
 }
 
-function mostrarSiguiente() {
+function siguiente() {
     if (indice >= ganadores.length) {
-        document.getElementById("panelGanador").innerHTML = "🎉 SORTEO FINALIZADO 🎉";
+        document.getElementById("panelGanador").innerHTML = "🎉 FINALIZADO 🎉";
+        guardarResultados();
         return;
     }
 
-    document.getElementById("panelGanador").innerHTML = "🎰 Sorteando...";
-    
-    setTimeout(() => {
-        let nombre = ganadores[indice];
-        document.getElementById("panelGanador").innerHTML =
-            `🏆 Puesto ${indice + 1}: <br><b>${nombre}</b>`;
+    let panel = document.getElementById("panelGanador");
+    let redoble = document.getElementById("redoble");
+    panel.innerHTML = "<div id='cuenta'>3</div>";
+    redoble.play();
 
-        let div = document.createElement("div");
-        div.className = "puesto";
-        div.innerHTML = `Puesto ${indice + 1}: ${nombre}`;
-        document.getElementById("listaGanadores").appendChild(div);
-
-        indice++;
-        setTimeout(mostrarSiguiente, 2500);
-    }, 1500);
+    let c = 3;
+    let intervalo = setInterval(()=>{
+        c--;
+        if (c === 0) {
+            clearInterval(intervalo);
+            redoble.pause(); redoble.currentTime = 0;
+            mostrarGanador();
+        } else {
+            document.getElementById("cuenta").innerText = c;
+        }
+    }, 1000);
 }
 
-function resetear() {
-    document.getElementById("panelGanador").innerHTML = "";
-    document.getElementById("listaGanadores").innerHTML = "";
-    indice = 0;
+function mostrarGanador() {
+    let nombre = ganadores[indice];
+    document.getElementById("panelGanador").innerHTML = `🏆 Puesto ${indice+1}<br><b>${nombre}</b>`;
+    document.getElementById("aplausos").play();
+
+    let div = document.createElement("div");
+    div.className = "puesto";
+    div.innerText = `Puesto ${indice+1}: ${nombre}`;
+    document.getElementById("lista").appendChild(div);
+
+    lanzarConfetti();
+    indice++;
+}
+
+function lanzarConfetti() {
+    for (let i=0;i<80;i++){
+        let c = document.createElement("div");
+        c.className = "confetti";
+        c.style.left = Math.random()*100+"vw";
+        c.style.background = ["#7fa866","#e6c75a","#4f6f3a"][Math.floor(Math.random()*3)];
+        c.style.animationDuration = (2+Math.random()*2)+"s";
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(),3000);
+    }
+}
+
+function modoPresentador() {
+    document.querySelectorAll("textarea,input,button").forEach(e=>e.style.display="none");
+}
+
+function guardarResultados() {
+    let texto = "RESULTADOS SORTEO FRIMSA S.A.\n\n";
+    document.querySelectorAll(".puesto").forEach(p=>texto+=p.innerText+"\n");
+
+    let blob = new Blob([texto], {type:"text/plain"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "resultados_sorteo_frimsa.txt";
+    a.click();
 }
 </script>
 
